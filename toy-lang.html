@@ -1,0 +1,441 @@
+<style>
+.args {
+	border-radius: 0.5em;
+	border: 1px solid black;
+	border-width: 0px 1px;
+	padding: 0em 0.5em;
+}
+
+.dead-result {
+	background: rgba(255, 0, 0, 0.15);
+	border: 1px solid red;
+	margin: -1px;
+}
+
+.children-selected table {
+	background-color: red;
+}
+
+#cursor {
+	display: inline-block;
+    height: 0.7em;
+    padding: 0.3em 0.1em 0.3em 0.1em;
+    margin: -0.3em -0.1em -0.3em -0.1em;
+    background: rgba(0,0,0,0.5);
+}
+
+table {
+	padding: 1px;
+	border-spacing: 0px;
+}
+
+</style>
+
+<div id="container">
+</div>
+
+<div id="code"></div>
+
+<script>
+
+function plus(args, context, results) {
+	var res = 0;
+	for (var e of args) {
+		var v = evallisp(e, context, results);
+		if (v instanceof DeadResult) {
+			return v;
+		}
+		if (typeof(v) !== "number") {
+			return new DeadResult("can only add numbers");
+		}
+		res += v;
+	}
+	return res;
+}
+
+function times(args, context, results) {
+	var res = 1;
+	for (var e of args) {
+		var v = evallisp(e, context, results);
+		if (v instanceof DeadResult) {
+			return v;
+		}
+		if (typeof(v) !== "number") {
+			return new DeadResult("can only multiply numbers");
+		}
+		res *= v;
+	}
+	return res;
+}
+
+function iff(args, context, results) {
+	var v = evallisp(args[0], context, results);
+	if (v instanceof DeadResult) {
+		return v;
+	}
+	if (v !== true && v !== false) {
+		return new DeadResult("argument to if must be boolean");
+	}
+	if (v) {
+		return evallisp(args[1], context, results);
+	} else {
+		return evallisp(args[2], context, results);
+	}
+}
+
+function lambda(outerArgs, outerContext, results) {
+	var argNames = [];
+	for (var name of outerArgs[0].args) {
+		argNames.push(name.name);
+	}
+
+	return function (args, context, results) {
+		var newContext = {parentContext: context};
+		for (var i = 0; i < argNames.length; i ++) {
+			newContext[argNames[i]] = evallisp(args[i], context, results);
+		}
+		return evallisp(outerArgs[1], newContext, results);
+	}
+}
+
+function evalf(args, context, results) {
+	var func = evallisp(args[0], context, results);
+	if (func instanceof DeadResult) {
+		return func;
+	} else {
+		return func(args.slice(1), context, results);		
+	}
+}
+
+var defaultContext = {
+	'false': false,
+	'true': true,
+	'+': plus,
+	'*': times,
+	'if': iff,
+	'lambda': lambda,
+	'eval': evalf,
+}
+
+function DeadResult(message) {
+	this.message = message;
+}
+
+function lookup(name, context, results) {
+	while (context) {
+		var ctx = context[name];
+		if (ctx !== undefined) {
+			return ctx;
+		}
+		context = context.parentContext;
+	}
+	return new DeadResult("variable '" + name + "' not found");
+}
+
+function evallisp(el, context, results) {
+	var res;
+	if (el.args === undefined) {
+		if (el.name === "") {
+			res = "";
+		} else if (el.name[0] === "'") {
+			res = el.name.slice(1)
+		} else if (!Number.isNaN(Number(el.name))) {
+			res = Number(el.name);
+		} else {
+			res = lookup(el.name, context, results);
+		}
+	} else {
+		res = lookup(el.name, context, results)
+		if (!(res instanceof DeadResult)) {
+			res = res(el.args, context, results);
+		}
+	}
+	results.set(el, res);
+	return res;	
+}
+
+var container = document.getElementById("container");
+var code = document.getElementById("code");
+
+function makeElement() {
+	var table = document.createElement("table");
+	var row = document.createElement("tr");
+	var head = document.createElement("td");
+
+	row.appendChild(head);
+	table.appendChild(row);
+
+	return {table: table, head: head, row: row};
+}
+
+function elementToFunc(element, childrenSelected) {
+	var row = element.row;
+	element.args = document.createElement("td");
+	row.appendChild(element.args);
+	element.args.classList.add("args");
+	if (childrenSelected) {
+		element.args.classList.add("children-selected");
+	}
+}
+
+function draw() {
+	var results = new Map([]);
+	var result = evallisp(orig, defaultContext, results);
+	if (result instanceof DeadResult) {
+		code.innerHTML = "Error: " + result.message;
+	} else {
+		code.innerHTML = result;
+	}
+	container.innerHTML = "";
+	var startNode = makeElement();
+	drawRecursive(orig, startNode, results);
+	container.appendChild(startNode.table);
+}
+
+function drawRecursive(func, el, results) {
+	el.head.addEventListener("click", function() {
+		active = func;
+		selection = undefined;
+		draw();
+	});
+	var childrenSelected = false;
+
+	el.head.innerHTML = func.name;
+
+	if (results.get(func) instanceof DeadResult) {
+		el.table.classList.add("dead-result");
+	}
+
+	if (func === active) {
+		if (selection === undefined) {
+			el.head.style.backgroundColor = "#aaf";			
+		} else {
+			el.head.innerHTML = func.name.slice(0, selection) + "<span id='cursor'></span>" + func.name.slice(selection)
+		}
+	}
+	if (func.args) {
+		elementToFunc(el, childrenSelected);
+		var idx = 0;
+		for (var f of func.args) {
+			var e = makeElement();
+			drawRecursive(f, e, results);
+			el.args.appendChild(e.table);
+			idx ++;
+		}
+	}
+}
+
+function makeFunction() {
+	return {name: ""};
+}
+
+function addConnections(parent) {
+	for (var element of parent.args) {
+		element.parent = parent;
+		if (element.args) {
+			addConnections(element);
+		}
+	}
+}
+
+var active = {
+	name: "eval",
+	args: [{
+		name: "lambda", 
+		args: [
+			{name: "", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
+			{name: "if", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
+		]
+	}, {name: "true"}, {name: "2"}, {name: "4"}]
+};
+
+addConnections(active);
+var orig = active;
+var selection = undefined;
+
+function constrainSelection() {
+	if (selection !== undefined) {
+		if (selection > active.name.length) {
+			selection = active.name.length;
+		}
+	}
+}
+
+window.addEventListener("keydown", function(e){
+	if (e.keyCode == 37) {
+		constrainSelection();
+		if (selection !== undefined) {
+			if (selection === 0) {
+				left();
+				selection = undefined;
+			} else {
+				selection -= 1;				
+			}
+		} else {
+			left();
+		}
+	}
+	if (e.keyCode == 38) {
+		up();
+	}
+	if (e.keyCode == 39) {
+		constrainSelection();
+		if (selection !== undefined) {
+			selection += 1;
+			if (selection === active.name.length + 1) {
+				selection = undefined;
+				right();
+			}
+		} else {
+			right();
+		}
+	}
+	if (e.keyCode == 40) {
+		down();
+	}
+	draw();
+});
+
+function up() {
+	var p = active.parent;
+	if (p) {
+		var idx = p.args.indexOf(active);
+		active = p.args[Math.max(idx - 1, 0)];			
+	}
+}
+function down() {
+	var p = active.parent;
+	if (p) {
+		var idx = p.args.indexOf(active);
+		active = p.args[Math.min(idx + 1, p.args.length - 1)];
+	}
+}
+function left() {
+	if (active.parent) {
+		active = active.parent;			
+	}
+}
+function right() {
+	if (active.args && active.args[0]) {
+		active = active.args[0];			
+	}
+}
+
+function addCellBelow() {
+	var index = active.parent.args.indexOf(active);
+	var newElement = makeFunction();
+	newElement.parent = active.parent;
+	active.parent.args.splice(index+1, 0, newElement);
+	active = newElement;
+	selection = undefined;
+}
+
+window.addEventListener("keypress", function(e){
+	if (e.keyCode == 40) {
+		// open paren
+		if (active.args) {
+			active = active.args[0];
+		} else {
+			var newElement = makeFunction();
+			newElement.parent = active;
+			active.args = [newElement];
+			active = newElement;		
+		}
+		selection = undefined;
+	} else if (e.keyCode == 44) {
+		// ,
+		addCellBelow();
+	} else if (e.keyCode == 13) {
+		if (selection === undefined) {
+			selection = active.name.length;
+		} else {
+			addCellBelow();
+		}
+	} else if (e.keyCode == 8) {
+		// delete
+		constrainSelection();
+		if (active.name === "") {
+			var parent = active.parent;
+			var idx = parent.args.indexOf(active);
+			active.parent.args.splice(idx, 1);
+			if (active.parent.args.length === 0) {
+				active = parent;
+				parent.args = undefined;
+			} else {
+				active = parent.args[Math.max(0, idx - 1)];
+			}
+		} else {
+			if (selection !== undefined) {
+				if (selection) {
+					active.name = active.name.substring(0, selection - 1) + active.name.substring(selection);			
+					selection -= 1;
+				}
+			} else {
+				active.name = "";
+			}
+		}
+	} else if (e.keyCode === 27) {
+		selection = undefined;
+	} else {
+		constrainSelection();
+		if (selection === undefined) {
+			active.name = String.fromCharCode(e.keyCode);
+			selection = 1;
+		} else {
+			active.name = active.name.slice(0, selection) +
+			String.fromCharCode(e.keyCode) +
+			active.name.slice(selection);
+			selection += 1;
+		}
+	}
+	draw();
+});
+
+draw();
+
+
+
+// function makeSpan(text, startidx, endidx) {
+// 	var span1 = document.createElement("span");
+// 	var span2 = document.createElement("span");
+
+// 	if (endidx === null) {
+// 		endidx = text.length;
+// 	}
+
+// 	var a, b, c;
+// 	a = text.substring(0, startidx);
+// 	b = text.substring(startidx, endidx);
+// 	c = text.substring(endidx, text.length);
+// 	var texta = document.createTextNode(a);
+// 	var textb = document.createTextNode(b);
+// 	var textc = document.createTextNode(c);
+// 	span1.appendChild(texta);
+// 	span1.appendChild(span2);
+// 	span2.appendChild(textb);
+// 	span1.appendChild(textc);
+
+// 	span2.style.backgroundColor = "red";
+
+// 	return span1;
+// }
+	// if (depth === selection.depth) {
+	// 	if (idx === selection.startidx && idx === selection.endidx) {
+	// 		el.head.appendChild(makeSpan(func.name, selection.startchar, selection.endchar));			
+	// 	} else if (idx === selection.startidx) {
+	// 		childrenSelected = true;
+	// 		el.head.appendChild(makeSpan(func.name, selection.startchar, null));
+	// 	} else if (idx === selection.endidx) {
+	// 		el.head.appendChild(makeSpan(func.name, 0, selection.endchar));
+	// 	} else if (idx > selection.startidx && idx < selection.endidx) {
+	// 		childrenSelected = true;
+	// 		el.head.innerHTML = func.name;
+	// 		el.head.style.backgroundColor = "red";			
+	// 	} else {
+	// 		el.head.innerHTML = func.name;
+	// 	}
+	// } else {
+	// 	el.head.innerHTML = func.name;
+	// }
+
+</script>
