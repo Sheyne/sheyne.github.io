@@ -147,7 +147,11 @@ function evallisp(el, context, results) {
 	} else {
 		res = lookup(el.name, context, results)
 		if (!(res instanceof DeadResult)) {
-			res = res(el.args, context, results);
+			if (typeof(res) === "function") {
+				res = res(el.args, context, results);
+			} else {
+				res = new DeadResult("calling a non-function");
+			}
 		}
 	}
 	results.set(el, res);
