@@ -34,6 +34,10 @@ table {
 <div id="container">
 </div>
 
+<div>
+How to use: navigate with the mouse or arrow keys (up and down move between arguments). "Enter" enters edit mode. "Esc" exits edit mode. 
+Type to rename things. Vertical elements in parens are function arguments. </div>
+
 <div id="code"></div>
 
 <script>
@@ -274,7 +278,7 @@ function draw() {
 	if (result instanceof DeadResult) {
 		code.innerHTML = "Error: " + result.message;
 	} else {
-		code.innerHTML = result + "<br><pre style='width: 30em; height: 10em; overflow: scroll;'>" + JSON.stringify(orig, function(key, value) {if (key === "parent") {return undefined;} return value;}, " ");
+		code.innerHTML = result + "<br><pre>" + JSON.stringify(orig, function(key, value) {if (key === "parent") {return undefined;} return value;}, " ");
 	}
 	container.innerHTML = "";
 	var startNode = makeElement();
@@ -378,9 +382,11 @@ window.addEventListener("keydown", function(e){
 		} else {
 			left();
 		}
+        e.preventDefault();
 	}
 	if (e.keyCode == 38) {
 		up();
+        e.preventDefault();
 	}
 	if (e.keyCode == 39) {
 		constrainSelection();
@@ -393,9 +399,11 @@ window.addEventListener("keydown", function(e){
 		} else {
 			right();
 		}
+        e.preventDefault();
 	}
 	if (e.keyCode == 40) {
 		down();
+        e.preventDefault();
 	}
 	draw();
 });
