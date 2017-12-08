@@ -147,22 +147,34 @@ function lambda(outerArgs, outerContext, results) {
 		argNames.push(name.name);
 	}
 
-	return function (args, context, results) {
+	var lambdaFunc = function (args, context, results) {
 		var newContext = {parentContext: context};
 		for (var i = 0; i < argNames.length; i ++) {
 			newContext[argNames[i]] = evallisp(args[i], context, results);
 		}
 		return evallisp(outerArgs[1], newContext, results);
+	};
+
+	lambdaFunc.numArgs = argNames.length;
+
+	return lambdaFunc;
+}
+
+function calllisp(func, args, context, results) {
+	if (func instanceof DeadResult) {
+		return func;
+	} else if (typeof(func) !== "function")  {
+		return new DeadResult("calling a non-function");
+	} else if (func.numArgs && func.numArgs != args.length) {
+		return new DeadResult("arity error");
+	} else {
+		return func(args, context, results);		
 	}
 }
 
 function evalf(args, context, results) {
 	var func = evallisp(args[0], context, results);
-	if (func instanceof DeadResult) {
-		return func;
-	} else {
-		return func(args.slice(1), context, results);		
-	}
+	return calllisp(func, args.slice(1), context, results);
 }
 
 var defaultContext = {
@@ -209,14 +221,8 @@ function evallisp(el, context, results) {
 			res = lookup(el.name, context, results);
 		}
 	} else {
-		res = lookup(el.name, context, results)
-		if (!(res instanceof DeadResult)) {
-			if (typeof(res) === "function") {
-				res = res(el.args, context, results);
-			} else {
-				res = new DeadResult("calling a non-function");
-			}
-		}
+		res = lookup(el.name, context, results);
+		res = calllisp(res, el.args, context, results);
 	}
 	results.set(el, res);
 	return res;	
