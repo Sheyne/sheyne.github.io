@@ -287,9 +287,10 @@ function draw() {
 }
 
 function drawRecursive(func, el, results) {
-	el.head.addEventListener("click", function() {
+	el.table.addEventListener("click", function(e) {
 		active = func;
 		selection = undefined;
+		e.stopPropagation();
 		draw();
 	});
 	var childrenSelected = false;
@@ -302,7 +303,7 @@ function drawRecursive(func, el, results) {
 
 	if (func === active) {
 		if (selection === undefined) {
-			el.head.style.backgroundColor = "#aaf";			
+			el.table.style.backgroundColor = "#aaf";			
 		} else {
 			el.head.innerHTML = func.name.slice(0, selection) + "<span id='cursor'></span>" + func.name.slice(selection)
 		}
