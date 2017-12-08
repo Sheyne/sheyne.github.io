@@ -41,27 +41,77 @@ table {
 function plus(args, context, results) {
 	var res = 0;
 	for (var e of args) {
-		var v = evallisp(e, context, results);
+		var v = evalnumber(e, context, results, "add");
 		if (v instanceof DeadResult) {
 			return v;
-		}
-		if (typeof(v) !== "number") {
-			return new DeadResult("can only add numbers");
 		}
 		res += v;
 	}
 	return res;
 }
 
+function evalnumber(e, context, results, message) {
+	var v = evallisp(e, context, results);
+	if (v instanceof DeadResult) {
+		return v;
+	}
+	if (typeof(v) !== "number") {
+		return new DeadResult("can only " + message + " numbers");
+	}
+	return v;
+}
+
+function lessthan(args, context, results) {
+	return binaryMath(function(a, b) {
+		return a < b
+	}, args, context, results, "<");
+}
+
+function greaterthan(args, context, results) {
+	return binaryMath(function(a, b) {
+		return a > b
+	}, args, context, results, ">");
+}
+
+function equalto(args, context, results) {
+	return binaryMath(function(a, b) {
+		return a === b
+	}, args, context, results, "=");
+}
+
+function minus(args, context, results) {
+	return binaryMath(function(a, b) {
+		return a - b
+	}, args, context, results, "-");
+}
+
+function divide(args, context, results) {
+	return binaryMath(function(a, b) {
+		return a / b
+	}, args, context, results, "/");
+}
+
+function binaryMath(op, args, context, results, name) {
+	var res = 0;
+	if (args.length != 2) {
+		return new DeadResult(name + " needs exactly two arguments");
+	}
+	var a = evalnumber(args[0], context, results, name), b = evalnumber(args[1], context, results, name);
+	if (a instanceof DeadResult) {
+		return a;
+	}
+	if (b instanceof DeadResult) {
+		return b;
+	}
+	return op(a, b);
+}
+
 function times(args, context, results) {
 	var res = 1;
 	for (var e of args) {
-		var v = evallisp(e, context, results);
+		var v = evalnumber(e, context, results, "multiply");
 		if (v instanceof DeadResult) {
 			return v;
-		}
-		if (typeof(v) !== "number") {
-			return new DeadResult("can only multiply numbers");
 		}
 		res *= v;
 	}
@@ -81,6 +131,14 @@ function iff(args, context, results) {
 	} else {
 		return evallisp(args[2], context, results);
 	}
+}
+
+function letrec(args, context, results) {
+	var newContext = {
+		parentContext: context,
+	}
+	newContext[args[0].name] = evallisp(args[0].args[0], newContext, results);
+	return evallisp(args[1], newContext, results);
 }
 
 function lambda(outerArgs, outerContext, results) {
@@ -112,9 +170,15 @@ var defaultContext = {
 	'true': true,
 	'+': plus,
 	'*': times,
+	'<': lessthan,
+	'>': greaterthan,
+	'=': equalto,
+	'-': minus,
+	'/': divide,
 	'if': iff,
 	'lambda': lambda,
 	'eval': evalf,
+	'letrec': letrec,
 }
 
 function DeadResult(message) {
@@ -188,7 +252,7 @@ function draw() {
 	if (result instanceof DeadResult) {
 		code.innerHTML = "Error: " + result.message;
 	} else {
-		code.innerHTML = result;
+		code.innerHTML = result + "<br><pre style='width: 30em; height: 10em; overflow: scroll;'>" + JSON.stringify(orig, function(key, value) {if (key === "parent") {return undefined;} return value;}, " ");
 	}
 	container.innerHTML = "";
 	var startNode = makeElement();
@@ -242,16 +306,30 @@ function addConnections(parent) {
 	}
 }
 
-var active = {
-	name: "eval",
-	args: [{
-		name: "lambda", 
-		args: [
-			{name: "", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
-			{name: "if", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
-		]
-	}, {name: "true"}, {name: "2"}, {name: "4"}]
-};
+// var active = {
+// 	name: "eval",
+// 	args: [{
+// 		name: "lambda", 
+// 		args: [
+// 			{name: "", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
+// 			{name: "if", args: [{name: 'x'}, {name: 'y'}, {name: 'z'}]},
+// 		]
+// 	}, {name: "true"}, {name: "2"}, {name: "4"}]
+// };
+// var active = {
+// 	name: "letrec",
+// 	args: [{name: "f", args: [{
+// 		name: "lambda", 
+// 		args: [
+// 			{name: "", args: [{name: 'x'}]},
+// 			{name: "x"},
+// 		]
+// 	}]},
+// 		{name: "f", args: [{name: "1"}]}
+// 	],
+// };
+
+var active = {"name":"letrec","args":[{"name":"f","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"},{"name":"y"}]},{"name":"if","args":[{"name":"=","args":[{"name":"x"},{"name":"1"}]},{"name":"y"},{"name":"f","args":[{"name":"-","args":[{"name":"x"},{"name":"1"}]},{"name":"+","args":[{"name":"y"},{"name":"2"}]}]}]}]}]},{"name":"f","args":[{"name":"5"},{"name":"2"}]}]};
 
 addConnections(active);
 var orig = active;
