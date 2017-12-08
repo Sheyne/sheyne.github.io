@@ -67,11 +67,15 @@ function lessthan(args, context, results) {
 	}, args, context, results, "<");
 }
 
+lessthan.numArgs = 2;
+
 function greaterthan(args, context, results) {
 	return binaryMath(function(a, b) {
 		return a > b
 	}, args, context, results, ">");
 }
+
+greaterthan.numArgs = 2;
 
 function equalto(args, context, results) {
 	return binaryMath(function(a, b) {
@@ -79,17 +83,23 @@ function equalto(args, context, results) {
 	}, args, context, results, "=");
 }
 
+equalto.numArgs = 2;
+
 function minus(args, context, results) {
 	return binaryMath(function(a, b) {
 		return a - b
 	}, args, context, results, "-");
 }
 
+minus.numArgs = 2;
+
 function divide(args, context, results) {
 	return binaryMath(function(a, b) {
 		return a / b
 	}, args, context, results, "/");
 }
+
+divide.numArgs = 2;
 
 function binaryMath(op, args, context, results, name) {
 	var res = 0;
@@ -133,6 +143,8 @@ function iff(args, context, results) {
 	}
 }
 
+iff.numArgs = 3;
+
 function letrec(args, context, results) {
 	var newContext = {
 		parentContext: context,
@@ -140,6 +152,8 @@ function letrec(args, context, results) {
 	newContext[args[0].name] = evallisp(args[0].args[0], newContext, results);
 	return evallisp(args[1], newContext, results);
 }
+
+letrec.numArgs = 2;
 
 function lambda(outerArgs, outerContext, results) {
 	var argNames = [];
@@ -159,6 +173,8 @@ function lambda(outerArgs, outerContext, results) {
 
 	return lambdaFunc;
 }
+
+lambda.numArgs = 2;
 
 function calllisp(func, args, context, results) {
 	if (func instanceof DeadResult) {
