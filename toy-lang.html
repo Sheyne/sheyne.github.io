@@ -406,6 +406,33 @@ window.addEventListener("keydown", function(e){
 		down();
         e.preventDefault();
 	}
+	if (e.keyCode === 8) {
+		// delete
+        e.preventDefault();
+		constrainSelection();
+		if (active.name === "") {
+			var parent = active.parent;
+			var idx = parent.args.indexOf(active);
+			active.parent.args.splice(idx, 1);
+			if (active.parent.args.length === 0) {
+				active = parent;
+				parent.args = undefined;
+			} else {
+				active = parent.args[Math.max(0, idx - 1)];
+			}
+			selection = undefined;
+		} else {
+			if (selection !== undefined) {
+				if (selection) {
+					active.name = active.name.substring(0, selection - 1) + active.name.substring(selection);			
+					selection -= 1;
+				}
+			} else {
+				active.name = "";
+			}
+		}
+	}
+	console.log(e.keyCode);
 	draw();
 });
 
@@ -466,28 +493,6 @@ window.addEventListener("keypress", function(e){
 		}
 	} else if (e.keyCode == 8) {
 		// delete
-		constrainSelection();
-		if (active.name === "") {
-			var parent = active.parent;
-			var idx = parent.args.indexOf(active);
-			active.parent.args.splice(idx, 1);
-			if (active.parent.args.length === 0) {
-				active = parent;
-				parent.args = undefined;
-			} else {
-				active = parent.args[Math.max(0, idx - 1)];
-			}
-			selection = undefined;
-		} else {
-			if (selection !== undefined) {
-				if (selection) {
-					active.name = active.name.substring(0, selection - 1) + active.name.substring(selection);			
-					selection -= 1;
-				}
-			} else {
-				active.name = "";
-			}
-		}
 	} else if (e.keyCode === 27) {
 		selection = undefined;
 	} else {
