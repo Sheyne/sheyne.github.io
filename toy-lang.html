@@ -16,6 +16,12 @@
 	background-color: red;
 }
 
+.horiz-component:not(:last-child) > table > tr:last-child::after  {
+	content: ",";
+	vertical-align: middle;
+	display: table-cell;
+}
+
 #cursor {
 	display: inline-block;
     height: 0.7em;
@@ -266,14 +272,30 @@ function makeElement() {
 	return {table: table, head: head, row: row};
 }
 
-function elementToFunc(element, childrenSelected) {
+function elementToFunc(element, horiz) {
 	var row = element.row;
 	element.args = document.createElement("td");
 	row.appendChild(element.args);
 	element.args.classList.add("args");
-	if (childrenSelected) {
-		element.args.classList.add("children-selected");
+
+	if (horiz) {
+		var table = document.createElement("table");
+		var row = document.createElement("tr");
+		table.appendChild(row);
+		element.args.appendChild(table);
+		element.args = row;
 	}
+}
+
+function addNextToElement(element, child, horiz) {
+	var toAdd = child.table;
+	if (horiz) {
+		var cell = document.createElement("td");
+		cell.classList.add("horiz-component");
+		cell.appendChild(child.table);
+		toAdd = cell;
+	}
+	element.args.appendChild(toAdd);
 }
 
 function draw() {
@@ -297,7 +319,6 @@ function drawRecursive(func, el, results) {
 		e.stopPropagation();
 		draw();
 	});
-	var childrenSelected = false;
 
 	el.head.innerHTML = func.name;
 
@@ -313,13 +334,23 @@ function drawRecursive(func, el, results) {
 		}
 	}
 	if (func.args) {
-		elementToFunc(el, childrenSelected);
-		var idx = 0;
+		var horiz = true;
+		var containsActive = false;
+		for (var f of func.args) {
+			if (f.args !== undefined) {
+				horiz = false;
+			}
+			if (f === active) {
+				containsActive = true;
+			}
+		}
+		horiz = (func.horiz || horiz) && !containsActive;
+
+		elementToFunc(el, horiz);		
 		for (var f of func.args) {
 			var e = makeElement();
 			drawRecursive(f, e, results);
-			el.args.appendChild(e.table);
-			idx ++;
+			addNextToElement(el, e, horiz);
 		}
 	}
 }
@@ -360,7 +391,7 @@ function addConnections(parent) {
 // 	],
 // };
 
-var active = {"name":"letrec","args":[{"name":"inc","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"+","args":[{"name":"x"},{"name":"1"}]}]}]},{"name":"sum","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"low"},{"name":"high"},{"name":"func"},{"name":"accum"}]},{"name":"if","args":[{"name":">","args":[{"name":"low"},{"name":"high"}]},{"name":"accum"},{"name":"sum","args":[{"name":"inc","args":[{"name":"low"}]},{"name":"high"},{"name":"func"},{"name":"+","args":[{"name":"accum"},{"name":"func","args":[{"name":"low"}]}]}]}]}]}]},{"name":"sum","args":[{"name":"1"},{"name":"3"},{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"*","args":[{"name":"x"},{"name":"x"}]}]},{"name":"0"}]}]};
+var active = {"name":"letrec","args":[{"name":"inc","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"+","args":[{"name":"x"},{"name":"1"}]}]}]},{"name":"sum","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"low"},{"name":"high"},{"name":"func"},{"name":"accum"}]},{"name":"if","args":[{"name":">","args":[{"name":"low"},{"name":"high"}]},{"name":"accum"},{"name":"sum", "args":[{"name":"inc","args":[{"name":"low"}]},{"name":"high"},{"name":"func"},{"name":"+","args":[{"name":"accum"},{"name":"func","args":[{"name":"low"}]}]}]}]}]}]},{"name":"sum","args":[{"name":"1"},{"name":"3"},{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"*","args":[{"name":"x"},{"name":"x"}]}]},{"name":"0"}]}]};
 
 addConnections(active);
 var orig = active;
@@ -475,6 +506,7 @@ function addCellBelow() {
 }
 
 window.addEventListener("keypress", function(e){
+	console.log(e);
 	if (e.keyCode == 40) {
 		// open paren
 		if (active.args) {
@@ -499,6 +531,8 @@ window.addEventListener("keypress", function(e){
 		// delete
 	} else if (e.keyCode === 27) {
 		selection = undefined;
+	} else if (e.key === "t" && e.ctrlKey) {
+		active.horiz = !active.horiz;
 	} else {
 		constrainSelection();
 		if (selection === undefined) {
