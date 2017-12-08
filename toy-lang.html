@@ -38,6 +38,7 @@ table {
 How to use: navigate with the mouse or arrow keys (up and down move between arguments). "Enter" enters edit mode. "Esc" exits edit mode. 
 Type to rename things. Vertical elements in parens are function arguments. </div>
 
+<div>The default example above computes the summation from for <code>i = low</code> to <code>i = high</code> of <code>func(i)</code>.</div>
 <div id="code"></div>
 
 <script>
@@ -153,11 +154,14 @@ function letrec(args, context, results) {
 	var newContext = {
 		parentContext: context,
 	}
-	newContext[args[0].name] = evallisp(args[0].args[0], newContext, results);
-	return evallisp(args[1], newContext, results);
+	for (var arg of args.slice(0, args.length - 1)) {
+		if (! arg.args) {
+			return new DeadResult("binding '" + arg.name + "' must have a body");
+		}
+		newContext[arg.name] = evallisp(arg.args[0], newContext, results);
+	}
+	return evallisp(args[args.length - 1], newContext, results);
 }
-
-letrec.numArgs = 2;
 
 function lambda(outerArgs, outerContext, results) {
 	var argNames = [];
@@ -356,7 +360,7 @@ function addConnections(parent) {
 // 	],
 // };
 
-var active = {"name":"letrec","args":[{"name":"f","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"},{"name":"y"}]},{"name":"if","args":[{"name":"=","args":[{"name":"x"},{"name":"1"}]},{"name":"y"},{"name":"f","args":[{"name":"-","args":[{"name":"x"},{"name":"1"}]},{"name":"+","args":[{"name":"y"},{"name":"2"}]}]}]}]}]},{"name":"f","args":[{"name":"5"},{"name":"2"}]}]};
+var active = {"name":"letrec","args":[{"name":"inc","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"+","args":[{"name":"x"},{"name":"1"}]}]}]},{"name":"sum","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"low"},{"name":"high"},{"name":"func"},{"name":"accum"}]},{"name":"if","args":[{"name":">","args":[{"name":"low"},{"name":"high"}]},{"name":"accum"},{"name":"sum","args":[{"name":"inc","args":[{"name":"low"}]},{"name":"high"},{"name":"func"},{"name":"+","args":[{"name":"accum"},{"name":"func","args":[{"name":"low"}]}]}]}]}]}]},{"name":"sum","args":[{"name":"1"},{"name":"3"},{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"*","args":[{"name":"x"},{"name":"x"}]}]},{"name":"0"}]}]};
 
 addConnections(active);
 var orig = active;
