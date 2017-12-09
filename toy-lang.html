@@ -37,16 +37,19 @@ table {
 
 </style>
 
+<div>
+<b>How to use:</b> navigate with the mouse or arrow keys (up and down move between arguments). "Enter" enters edit mode. "Esc" exits edit mode. 
+Type to rename things. Vertical elements in parens are function arguments. ^T toggles "horizontal" mode for a cell. Note that if 
+you are immediatly inside of a horizontal cell, it unfolds to vertical. Comma makes a new element immeditately after the current one, as
+does "Enter" if you're already in edit mode. Edits output continuously, be careful of putting the code in an infinite loop, which will 
+currently hang the GUI. </div>
+
+<div>The default example above computes the summation from for <code>i = low</code> to <code>i = high</code> of <code>func(i)</code>.</div>
+
 <div id="container">
 </div>
 
-<div>
-How to use: navigate with the mouse or arrow keys (up and down move between arguments). "Enter" enters edit mode. "Esc" exits edit mode. 
-Type to rename things. Vertical elements in parens are function arguments. ^T toggles "horizontal" mode for a cell. Note that if 
-you are immediatly inside of a horizontal cell, it unfolds to vertical. </div>
-
-<div>The default example above computes the summation from for <code>i = low</code> to <code>i = high</code> of <code>func(i)</code>.</div>
-<div id="code"></div>
+Output: <div id="code"></div>
 
 <script>
 
@@ -220,6 +223,7 @@ var defaultContext = {
 	'/': divide,
 	'if': iff,
 	'lambda': lambda,
+	'𝜆': lambda,
 	'eval': evalf,
 	'letrec': letrec,
 }
@@ -392,7 +396,7 @@ function addConnections(parent) {
 // 	],
 // };
 
-var active = {"name":"letrec","args":[{"name":"inc","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"+","args":[{"name":"x"},{"name":"1"}]}]}]},{"name":"sum","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"low"},{"name":"high"},{"name":"func"},{"name":"accum"}]},{"name":"if","args":[{"name":">","args":[{"name":"low"},{"name":"high"}]},{"name":"accum"},{"name":"sum", "args":[{"name":"inc","args":[{"name":"low"}]},{"name":"high"},{"name":"func"},{"name":"+","args":[{"name":"accum"},{"name":"func","args":[{"name":"low"}]}]}]}]}]}]},{"name":"sum","args":[{"name":"1"},{"name":"3"},{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"*","args":[{"name":"x"},{"name":"x"}]}]},{"name":"0"}]}]};
+var active = {"name":"letrec","args":[{"name":"inc","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"+","args":[{"name":"x"},{"name":"1"}]}]}]},{"name":"∑","args":[{"name":"lambda","args":[{"name":"","args":[{"name":"low"},{"name":"high"},{"name":"func"},{"name":"accum"}]},{"name":"if","args":[{"name":">","args":[{"name":"low"},{"name":"high"}]},{"name":"accum"},{"name":"∑", "args":[{"name":"inc","args":[{"name":"low"}]},{"name":"high"},{"name":"func"},{"name":"+","args":[{"name":"accum"},{"name":"func","args":[{"name":"low"}]}]}]}]}]}]},{"name":"∑","args":[{"name":"1"},{"name":"3"},{"name":"lambda","args":[{"name":"","args":[{"name":"x"}]},{"name":"*","args":[{"name":"x"},{"name":"x"}]}]},{"name":"0"}]}]};
 
 addConnections(active);
 var orig = active;
