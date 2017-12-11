@@ -376,6 +376,10 @@ define("editor", ["require", "exports", "display"], function (require, exports, 
                 this.up();
                 e.preventDefault();
             }
+            if (e.key === "b" && e.ctrlKey && e.altKey) {
+                this.active.horizontal = !this.active.horizontal;
+                e.preventDefault();
+            }
             if (e.keyCode == 39) {
                 this.constrainSelection();
                 if (this.selection !== undefined) {
@@ -495,12 +499,13 @@ define("editor", ["require", "exports", "display"], function (require, exports, 
             }
             else if (e.keyCode == 8) {
                 // delete
+                return;
             }
             else if (e.keyCode === 27) {
                 this.selection = undefined;
             }
-            else if (e.key === "t" && e.ctrlKey) {
-                this.active.horizontal = !this.active.horizontal;
+            else if (e.key === "b" && e.altKey) {
+                return;
             }
             else {
                 this.constrainSelection();
