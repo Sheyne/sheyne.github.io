@@ -389,6 +389,16 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             this.container.addEventListener("keypress", (e) => {
                 this.onkeypress(e);
             });
+            this.container.addEventListener("focus", (e) => {
+                if (this.active === undefined) {
+                    this.active = this.root;
+                    this.draw();
+                }
+            });
+            this.container.addEventListener("blur", (e) => {
+                this.active = undefined;
+                this.draw();
+            });
             this.program = program;
             uglyCodeToInvokeWorkers(this);
         }
@@ -406,6 +416,8 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         constrainSelection() {
+            if (!this.active)
+                return;
             if (this.selection !== undefined) {
                 if (this.selection > this.active.name.length) {
                     this.selection = this.active.name.length;
@@ -413,6 +425,8 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         onkeydown(e) {
+            if (!this.active)
+                return;
             if (e.keyCode == 37) {
                 this.constrainSelection();
                 if (this.selection !== undefined) {
@@ -492,6 +506,8 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             this.draw();
         }
         up() {
+            if (!this.active)
+                return;
             var p = this.active.parent;
             if (p) {
                 var idx = p.args.indexOf(this.active);
@@ -499,6 +515,8 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         down() {
+            if (!this.active)
+                return;
             var p = this.active.parent;
             if (p) {
                 var idx = p.args.indexOf(this.active);
@@ -506,16 +524,22 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         left() {
+            if (!this.active)
+                return;
             if (this.active.parent) {
                 this.active = this.active.parent;
             }
         }
         right() {
+            if (!this.active)
+                return;
             if (this.active.args && this.active.args[0]) {
                 this.active = this.active.args[0];
             }
         }
         addCellBelow() {
+            if (!this.active)
+                return;
             const parent = this.active.parent;
             if (parent) {
                 var index = parent.args.indexOf(this.active);
@@ -527,6 +551,8 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         onkeypress(e) {
+            if (!this.active)
+                return;
             if (e.keyCode == 40) {
                 // open paren
                 if (this.active.args) {
@@ -615,4 +641,3 @@ define("main", ["require", "exports", "editor"], function (require, exports, edi
     window.document.getElementById("container2").appendChild(editor2.container);
     window.document.getElementById("container3").appendChild(editor3.container);
 });
-//# sourceMappingURL=main.js.map

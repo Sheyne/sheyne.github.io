@@ -262,4 +262,3 @@ define("worker", ["require", "exports", "language"], function (require, exports,
         close();
     });
 });
-//# sourceMappingURL=worker.js.map
