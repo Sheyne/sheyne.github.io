@@ -604,11 +604,24 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 return;
             if (e.keyCode == 40) {
                 // open paren
-                if (this.active.args) {
-                    this.active = this.active.args[0];
+                let newElement = undefined;
+                if (this.selection !== undefined) {
+                    newElement = {
+                        name: this.active.name.substring(this.selection),
+                        args: this.active.args,
+                    };
+                    this.active.name = this.active.name.substring(0, this.selection);
+                    this.selection = 0;
                 }
                 else {
-                    var newElement = makePair();
+                    if (this.active.args) {
+                        this.active = this.active.args[0];
+                    }
+                    else {
+                        newElement = makePair();
+                    }
+                }
+                if (newElement !== undefined) {
                     this.active.args = [newElement];
                     if (hasArgs(this.active)) {
                         newElement.parent = this.active;
