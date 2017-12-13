@@ -12,6 +12,52 @@ define("language", ["require", "exports"], function (require, exports) {
             ;
         }
         Lisp.DeadResult = DeadResult;
+        const list = (args, context, info) => {
+            let res = [];
+            for (const e of args) {
+                const v = evallisp(e, context, info);
+                if (v instanceof DeadResult) {
+                    return v;
+                }
+                res.push(v);
+            }
+            return res;
+        };
+        const index = (args, context, info) => {
+            if (args.length != 2) {
+                return new DeadResult("index needs exactly two arguments");
+            }
+            const a = evallisp(args[0], context, info);
+            if (a instanceof DeadResult) {
+                return a;
+            }
+            if (typeof (a) !== 'object' || !Array.isArray(a)) {
+                return new DeadResult('0th argument must be a list');
+            }
+            const b = evalnumber(args[1], context, info, 'index');
+            if (b instanceof DeadResult) {
+                return b;
+            }
+            if (a[b] === undefined) {
+                return new DeadResult(b + " not in range");
+            }
+            return a[b];
+        };
+        index.numArgs = 2;
+        const concat = (args, context, info) => {
+            let res = "";
+            for (const e of args) {
+                const v = evallisp(e, context, info);
+                if (v instanceof DeadResult) {
+                    return v;
+                }
+                if (typeof (v) !== "string") {
+                    return new DeadResult("can only concat strings");
+                }
+                res += v;
+            }
+            return res;
+        };
         const plus = (args, context, info) => {
             let res = 0;
             for (const e of args) {
@@ -104,7 +150,7 @@ define("language", ["require", "exports"], function (require, exports) {
             }
         };
         iff.numArgs = 3;
-        const constrec = (args, context, info) => {
+        const letrec = (args, context, info) => {
             const newContext = {
                 parentContext: context,
                 members: {}
@@ -171,7 +217,10 @@ define("language", ["require", "exports"], function (require, exports) {
                 'lambda': lambda,
                 '𝜆': lambda,
                 'eval': evalf,
-                'letrec': constrec,
+                'letrec': letrec,
+                'concat': concat,
+                'list': list,
+                'index': index,
             }
         };
         function lookup(name, context, info) {
