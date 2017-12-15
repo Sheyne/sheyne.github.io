@@ -542,6 +542,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                                     this.selection = newActive.name.length;
                                     newActive.name += oldActive.name;
                                     this.active = newActive;
+                                    parent.args.splice(index, 1);
                                 }
                             }
                         }
