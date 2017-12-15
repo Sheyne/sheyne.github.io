@@ -1,21 +1,18 @@
-define("language", ["require", "exports"], function(require, exports) {
+define("language", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Lisp;
-    (function(Lisp) {
-        ;
-        ;
+    (function (Lisp) {
         class DeadResult {
             constructor(message) {
                 this.message = message;
             }
-            ;
         }
         Lisp.DeadResult = DeadResult;
         const list = (args, context, info) => {
-            let res = [];
+            const res = [];
             for (const e of args) {
-                const v = evallisp(e, context, info);
+                const v = Lisp.evallisp(e, context, info);
                 if (v instanceof DeadResult) {
                     return v;
                 }
@@ -23,18 +20,27 @@ define("language", ["require", "exports"], function(require, exports) {
             }
             return res;
         };
+        const exprToString = (args, context, info) => {
+            if (args.length !== 1) {
+                return new DeadResult("->string needs exactly 1 argument");
+            }
+            const a = Lisp.evallisp(args[0], context, info);
+            return "" + a;
+        };
+        exprToString.funcName = "->string";
+        exprToString.numArgs = 1;
         const index = (args, context, info) => {
-            if (args.length != 2) {
+            if (args.length !== 2) {
                 return new DeadResult("index needs exactly two arguments");
             }
-            const a = evallisp(args[0], context, info);
+            const a = Lisp.evallisp(args[0], context, info);
             if (a instanceof DeadResult) {
                 return a;
             }
-            if (typeof (a) !== 'object' || !Array.isArray(a)) {
-                return new DeadResult('0th argument must be a list');
+            if (typeof (a) !== "object" || !Array.isArray(a)) {
+                return new DeadResult("0th argument must be a list");
             }
-            const b = evalnumber(args[1], context, info, 'index');
+            const b = evalnumber(args[1], context, info, "index");
             if (b instanceof DeadResult) {
                 return b;
             }
@@ -47,7 +53,7 @@ define("language", ["require", "exports"], function(require, exports) {
         const concat = (args, context, info) => {
             let res = "";
             for (const e of args) {
-                const v = evallisp(e, context, info);
+                const v = Lisp.evallisp(e, context, info);
                 if (v instanceof DeadResult) {
                     return v;
                 }
@@ -69,8 +75,8 @@ define("language", ["require", "exports"], function(require, exports) {
             }
             return res;
         };
-        function evalnumber(e, context, info, message) {
-            const v = evallisp(e, context, info);
+        const evalnumber = (e, context, info, message) => {
+            const v = Lisp.evallisp(e, context, info);
             if (v instanceof DeadResult) {
                 return v;
             }
@@ -78,43 +84,44 @@ define("language", ["require", "exports"], function(require, exports) {
                 return new DeadResult("can only '" + message + "' numbers");
             }
             return v;
-        }
+        };
         const lessthan = (args, context, info) => {
-            return binaryMath(function(a, b) {
+            return binaryMath((a, b) => {
                 return a < b;
             }, args, context, info, "<");
         };
         lessthan.numArgs = 2;
         const greaterthan = (args, context, info) => {
-            return binaryMath(function(a, b) {
+            return binaryMath((a, b) => {
                 return a > b;
             }, args, context, info, ">");
         };
         greaterthan.numArgs = 2;
         const equalto = (args, context, info) => {
-            return binaryMath(function(a, b) {
+            return binaryMath((a, b) => {
                 return a === b;
             }, args, context, info, "=");
         };
         equalto.numArgs = 2;
         const minus = (args, context, info) => {
-            return binaryMath(function(a, b) {
+            return binaryMath((a, b) => {
                 return a - b;
             }, args, context, info, "-");
         };
         minus.numArgs = 2;
         const divide = (args, context, info) => {
-            return binaryMath(function(a, b) {
+            return binaryMath((a, b) => {
                 return a / b;
             }, args, context, info, "/");
         };
         divide.numArgs = 2;
-        function binaryMath(op, args, context, info, name) {
+        const binaryMath = (op, args, context, info, name) => {
             const res = 0;
-            if (args.length != 2) {
+            if (args.length !== 2) {
                 return new DeadResult(name + " needs exactly two arguments");
             }
-            const a = evalnumber(args[0], context, info, name), b = evalnumber(args[1], context, info, name);
+            const a = evalnumber(args[0], context, info, name);
+            const b = evalnumber(args[1], context, info, name);
             if (a instanceof DeadResult) {
                 return a;
             }
@@ -122,7 +129,7 @@ define("language", ["require", "exports"], function(require, exports) {
                 return b;
             }
             return op(a, b);
-        }
+        };
         const times = (args, context, info) => {
             let res = 1;
             for (const e of args) {
@@ -135,7 +142,7 @@ define("language", ["require", "exports"], function(require, exports) {
             return res;
         };
         const iff = (args, context, info) => {
-            const v = evallisp(args[0], context, info);
+            const v = Lisp.evallisp(args[0], context, info);
             if (v instanceof DeadResult) {
                 return v;
             }
@@ -143,89 +150,90 @@ define("language", ["require", "exports"], function(require, exports) {
                 return new DeadResult("argument to if must be boolean");
             }
             if (v) {
-                return evallisp(args[1], context, info);
+                return Lisp.evallisp(args[1], context, info);
             }
             else {
-                return evallisp(args[2], context, info);
+                return Lisp.evallisp(args[2], context, info);
             }
         };
         iff.numArgs = 3;
         const letrec = (args, context, info) => {
             const newContext = {
                 parentContext: context,
-                members: {}
+                members: {},
             };
             for (const arg of args.slice(0, args.length - 1)) {
-                if (!arg.args) {
+                if (arg.args === undefined) {
                     return new DeadResult("binding '" + arg.name + "' must have a body");
                 }
-                newContext.members[arg.name] = evallisp(arg.args[0], newContext, info);
+                newContext.members[arg.name] = Lisp.evallisp(arg.args[0], newContext, info);
             }
-            return evallisp(args[args.length - 1], newContext, info);
+            return Lisp.evallisp(args[args.length - 1], newContext, info);
         };
         const lambda = (outerArgs, outerContext, info) => {
             const argNames = [];
             const [arg1, arg2] = outerArgs;
-            if (!arg1.args) {
+            if (arg1.args === undefined) {
                 return new DeadResult("the first argument to a lambda must have arguments");
             }
             for (const name of arg1.args) {
                 argNames.push(name.name);
             }
-            const lambdaFunc = function(args, context, info) {
+            const lambdaFunc = (args, context, info) => {
                 const newContext = { parentContext: context, members: {} };
                 for (let i = 0; i < argNames.length; i++) {
-                    newContext.members[argNames[i]] = evallisp(args[i], context, info);
+                    newContext.members[argNames[i]] = Lisp.evallisp(args[i], context, info);
                 }
-                return evallisp(arg2, newContext, info);
+                return Lisp.evallisp(arg2, newContext, info);
             };
             lambdaFunc.numArgs = argNames.length;
             return lambdaFunc;
         };
         lambda.numArgs = 2;
-        function calllisp(func, args, context, info) {
+        const calllisp = (func, args, context, info) => {
             if (func instanceof DeadResult) {
                 return func;
             }
             else if (typeof (func) !== "function") {
                 return new DeadResult("calling a non-function");
             }
-            else if (func.numArgs && func.numArgs != args.length) {
+            else if (func.numArgs !== undefined && func.numArgs !== args.length) {
                 return new DeadResult("arity error");
             }
             else {
                 return func(args, context, info);
             }
-        }
-        function evalf(args, context, info) {
-            const func = evallisp(args[0], context, info);
+        };
+        const evalf = (args, context, info) => {
+            const func = Lisp.evallisp(args[0], context, info);
             return calllisp(func, args.slice(1), context, info);
-        }
+        };
         Lisp.defaultContext = {
             parentContext: undefined,
             members: {
-                'false': false,
-                'true': true,
-                '+': plus,
-                '*': times,
-                '<': lessthan,
-                '>': greaterthan,
-                '=': equalto,
-                '-': minus,
-                '/': divide,
-                'if': iff,
-                'lambda': lambda,
-                '𝜆': lambda,
-                'eval': evalf,
-                'letrec': letrec,
-                'concat': concat,
-                'list': list,
-                'index': index,
-            }
+                "false": false,
+                "true": true,
+                "+": plus,
+                "*": times,
+                "<": lessthan,
+                ">": greaterthan,
+                "=": equalto,
+                "-": minus,
+                "/": divide,
+                "if": iff,
+                "lambda": lambda,
+                "𝜆": lambda,
+                "eval": evalf,
+                "letrec": letrec,
+                "concat": concat,
+                "list": list,
+                "index": index,
+                "->string": exprToString,
+            },
         };
-        function lookup(name, context, info) {
+        const lookup = (name, context, info) => {
             let maybeContext = context;
-            while (maybeContext) {
+            while (maybeContext !== undefined) {
                 const ctx = maybeContext.members[name];
                 if (ctx !== undefined) {
                     return ctx;
@@ -233,8 +241,8 @@ define("language", ["require", "exports"], function(require, exports) {
                 maybeContext = maybeContext.parentContext;
             }
             return new DeadResult("variable '" + name + "' not found");
-        }
-        function evallisp(el, context, info) {
+        };
+        Lisp.evallisp = (el, context, info) => {
             let res;
             if (el.args === undefined) {
                 if (el.name === "") {
@@ -254,41 +262,37 @@ define("language", ["require", "exports"], function(require, exports) {
                 res = lookup(el.name, context, info);
                 res = calllisp(res, el.args, context, info);
             }
-            if (info.callback) {
+            if (info.callback !== undefined) {
                 info.callback(el, res);
             }
             return res;
-        }
-        Lisp.evallisp = evallisp;
+        };
     })(Lisp = exports.Lisp || (exports.Lisp = {}));
-    function traversal(prog, flat, idx) {
+    const traversal = (prog, flat, idx) => {
         flat(prog, idx[0]);
         idx[0]++;
-        if (!prog.args) {
+        if (prog.args === undefined) {
             return;
         }
         for (const func of prog.args) {
             traversal(func, flat, idx);
         }
-    }
-    function flattenPairToIdx(prog) {
+    };
+    exports.flattenPairToIdx = (prog) => {
         const flat = new Map();
         traversal(prog, (a, b) => flat.set(a, b), [0]);
         return flat;
-    }
-    exports.flattenPairToIdx = flattenPairToIdx;
-    function flattenIdxToPair(prog) {
+    };
+    exports.flattenIdxToPair = (prog) => {
         const flat = new Map();
         traversal(prog, (a, b) => flat.set(b, a), [0]);
         return flat;
-    }
-    exports.flattenIdxToPair = flattenIdxToPair;
-    function toString(prog) {
+    };
+    exports.toString = (prog) => {
         return JSON.stringify(prog, ["args", "name"]);
-    }
-    exports.toString = toString;
+    };
 });
-define("worker", ["require", "exports", "language"], function(require, exports, language_1) {
+define("worker", ["require", "exports", "language"], function (require, exports, language_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     addEventListener("message", (evt) => {

@@ -20,6 +20,15 @@ define("language", ["require", "exports"], function (require, exports) {
             }
             return res;
         };
+        const exprToString = (args, context, info) => {
+            if (args.length !== 1) {
+                return new DeadResult("->string needs exactly 1 argument");
+            }
+            const a = Lisp.evallisp(args[0], context, info);
+            return "" + a;
+        };
+        exprToString.funcName = "->string";
+        exprToString.numArgs = 1;
         const index = (args, context, info) => {
             if (args.length !== 2) {
                 return new DeadResult("index needs exactly two arguments");
@@ -219,6 +228,7 @@ define("language", ["require", "exports"], function (require, exports) {
                 "concat": concat,
                 "list": list,
                 "index": index,
+                "->string": exprToString,
             },
         };
         const lookup = (name, context, info) => {
@@ -406,7 +416,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 prevWorker.terminate();
             }
             document.getElementById("code").innerHTML = "processing";
-            const testWorker = new Worker("worker-starter.js?4");
+            const testWorker = new Worker("worker-starter.js?5");
             prevWorker = testWorker;
             cachedResults.clear();
             testWorker.addEventListener("message", (msg) => {
@@ -739,10 +749,7 @@ define("main", ["require", "exports", "editor"], function (require, exports, edi
             { name: "2" },
         ],
     });
-    const editor5 = new editor_1.EditorView({
-        name: "concat",
-        args: [{ name: "'hello" }, { name: "' world" }],
-    });
+    const editor5 = new editor_1.EditorView({ args: [{ name: "'hello " }, { args: [{ args: [{ name: "1" }, { name: "2" }], name: "+" }], name: "->string" }], name: "concat" });
     editor1.draw();
     editor2.draw();
     editor3.draw();
