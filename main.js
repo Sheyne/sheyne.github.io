@@ -3,19 +3,16 @@ define("language", ["require", "exports"], function (require, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
     var Lisp;
     (function (Lisp) {
-        ;
-        ;
         class DeadResult {
             constructor(message) {
                 this.message = message;
             }
-            ;
         }
         Lisp.DeadResult = DeadResult;
         const list = (args, context, info) => {
-            let res = [];
+            const res = [];
             for (const e of args) {
-                const v = evallisp(e, context, info);
+                const v = Lisp.evallisp(e, context, info);
                 if (v instanceof DeadResult) {
                     return v;
                 }
@@ -24,17 +21,17 @@ define("language", ["require", "exports"], function (require, exports) {
             return res;
         };
         const index = (args, context, info) => {
-            if (args.length != 2) {
+            if (args.length !== 2) {
                 return new DeadResult("index needs exactly two arguments");
             }
-            const a = evallisp(args[0], context, info);
+            const a = Lisp.evallisp(args[0], context, info);
             if (a instanceof DeadResult) {
                 return a;
             }
-            if (typeof (a) !== 'object' || !Array.isArray(a)) {
-                return new DeadResult('0th argument must be a list');
+            if (typeof (a) !== "object" || !Array.isArray(a)) {
+                return new DeadResult("0th argument must be a list");
             }
-            const b = evalnumber(args[1], context, info, 'index');
+            const b = evalnumber(args[1], context, info, "index");
             if (b instanceof DeadResult) {
                 return b;
             }
@@ -47,7 +44,7 @@ define("language", ["require", "exports"], function (require, exports) {
         const concat = (args, context, info) => {
             let res = "";
             for (const e of args) {
-                const v = evallisp(e, context, info);
+                const v = Lisp.evallisp(e, context, info);
                 if (v instanceof DeadResult) {
                     return v;
                 }
@@ -69,8 +66,8 @@ define("language", ["require", "exports"], function (require, exports) {
             }
             return res;
         };
-        function evalnumber(e, context, info, message) {
-            const v = evallisp(e, context, info);
+        const evalnumber = (e, context, info, message) => {
+            const v = Lisp.evallisp(e, context, info);
             if (v instanceof DeadResult) {
                 return v;
             }
@@ -78,43 +75,44 @@ define("language", ["require", "exports"], function (require, exports) {
                 return new DeadResult("can only '" + message + "' numbers");
             }
             return v;
-        }
+        };
         const lessthan = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath((a, b) => {
                 return a < b;
             }, args, context, info, "<");
         };
         lessthan.numArgs = 2;
         const greaterthan = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath((a, b) => {
                 return a > b;
             }, args, context, info, ">");
         };
         greaterthan.numArgs = 2;
         const equalto = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath((a, b) => {
                 return a === b;
             }, args, context, info, "=");
         };
         equalto.numArgs = 2;
         const minus = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath((a, b) => {
                 return a - b;
             }, args, context, info, "-");
         };
         minus.numArgs = 2;
         const divide = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath((a, b) => {
                 return a / b;
             }, args, context, info, "/");
         };
         divide.numArgs = 2;
-        function binaryMath(op, args, context, info, name) {
+        const binaryMath = (op, args, context, info, name) => {
             const res = 0;
-            if (args.length != 2) {
+            if (args.length !== 2) {
                 return new DeadResult(name + " needs exactly two arguments");
             }
-            const a = evalnumber(args[0], context, info, name), b = evalnumber(args[1], context, info, name);
+            const a = evalnumber(args[0], context, info, name);
+            const b = evalnumber(args[1], context, info, name);
             if (a instanceof DeadResult) {
                 return a;
             }
@@ -122,7 +120,7 @@ define("language", ["require", "exports"], function (require, exports) {
                 return b;
             }
             return op(a, b);
-        }
+        };
         const times = (args, context, info) => {
             let res = 1;
             for (const e of args) {
@@ -135,7 +133,7 @@ define("language", ["require", "exports"], function (require, exports) {
             return res;
         };
         const iff = (args, context, info) => {
-            const v = evallisp(args[0], context, info);
+            const v = Lisp.evallisp(args[0], context, info);
             if (v instanceof DeadResult) {
                 return v;
             }
@@ -143,89 +141,89 @@ define("language", ["require", "exports"], function (require, exports) {
                 return new DeadResult("argument to if must be boolean");
             }
             if (v) {
-                return evallisp(args[1], context, info);
+                return Lisp.evallisp(args[1], context, info);
             }
             else {
-                return evallisp(args[2], context, info);
+                return Lisp.evallisp(args[2], context, info);
             }
         };
         iff.numArgs = 3;
         const letrec = (args, context, info) => {
             const newContext = {
                 parentContext: context,
-                members: {}
+                members: {},
             };
             for (const arg of args.slice(0, args.length - 1)) {
-                if (!arg.args) {
+                if (arg.args === undefined) {
                     return new DeadResult("binding '" + arg.name + "' must have a body");
                 }
-                newContext.members[arg.name] = evallisp(arg.args[0], newContext, info);
+                newContext.members[arg.name] = Lisp.evallisp(arg.args[0], newContext, info);
             }
-            return evallisp(args[args.length - 1], newContext, info);
+            return Lisp.evallisp(args[args.length - 1], newContext, info);
         };
         const lambda = (outerArgs, outerContext, info) => {
             const argNames = [];
             const [arg1, arg2] = outerArgs;
-            if (!arg1.args) {
+            if (arg1.args === undefined) {
                 return new DeadResult("the first argument to a lambda must have arguments");
             }
             for (const name of arg1.args) {
                 argNames.push(name.name);
             }
-            const lambdaFunc = function (args, context, info) {
+            const lambdaFunc = (args, context, info) => {
                 const newContext = { parentContext: context, members: {} };
                 for (let i = 0; i < argNames.length; i++) {
-                    newContext.members[argNames[i]] = evallisp(args[i], context, info);
+                    newContext.members[argNames[i]] = Lisp.evallisp(args[i], context, info);
                 }
-                return evallisp(arg2, newContext, info);
+                return Lisp.evallisp(arg2, newContext, info);
             };
             lambdaFunc.numArgs = argNames.length;
             return lambdaFunc;
         };
         lambda.numArgs = 2;
-        function calllisp(func, args, context, info) {
+        const calllisp = (func, args, context, info) => {
             if (func instanceof DeadResult) {
                 return func;
             }
             else if (typeof (func) !== "function") {
                 return new DeadResult("calling a non-function");
             }
-            else if (func.numArgs && func.numArgs != args.length) {
+            else if (func.numArgs !== undefined && func.numArgs !== args.length) {
                 return new DeadResult("arity error");
             }
             else {
                 return func(args, context, info);
             }
-        }
-        function evalf(args, context, info) {
-            const func = evallisp(args[0], context, info);
+        };
+        const evalf = (args, context, info) => {
+            const func = Lisp.evallisp(args[0], context, info);
             return calllisp(func, args.slice(1), context, info);
-        }
+        };
         Lisp.defaultContext = {
             parentContext: undefined,
             members: {
-                'false': false,
-                'true': true,
-                '+': plus,
-                '*': times,
-                '<': lessthan,
-                '>': greaterthan,
-                '=': equalto,
-                '-': minus,
-                '/': divide,
-                'if': iff,
-                'lambda': lambda,
-                '𝜆': lambda,
-                'eval': evalf,
-                'letrec': letrec,
-                'concat': concat,
-                'list': list,
-                'index': index,
-            }
+                "false": false,
+                "true": true,
+                "+": plus,
+                "*": times,
+                "<": lessthan,
+                ">": greaterthan,
+                "=": equalto,
+                "-": minus,
+                "/": divide,
+                "if": iff,
+                "lambda": lambda,
+                "𝜆": lambda,
+                "eval": evalf,
+                "letrec": letrec,
+                "concat": concat,
+                "list": list,
+                "index": index,
+            },
         };
-        function lookup(name, context, info) {
+        const lookup = (name, context, info) => {
             let maybeContext = context;
-            while (maybeContext) {
+            while (maybeContext !== undefined) {
                 const ctx = maybeContext.members[name];
                 if (ctx !== undefined) {
                     return ctx;
@@ -233,8 +231,8 @@ define("language", ["require", "exports"], function (require, exports) {
                 maybeContext = maybeContext.parentContext;
             }
             return new DeadResult("variable '" + name + "' not found");
-        }
-        function evallisp(el, context, info) {
+        };
+        Lisp.evallisp = (el, context, info) => {
             let res;
             if (el.args === undefined) {
                 if (el.name === "") {
@@ -254,39 +252,35 @@ define("language", ["require", "exports"], function (require, exports) {
                 res = lookup(el.name, context, info);
                 res = calllisp(res, el.args, context, info);
             }
-            if (info.callback) {
+            if (info.callback !== undefined) {
                 info.callback(el, res);
             }
             return res;
-        }
-        Lisp.evallisp = evallisp;
+        };
     })(Lisp = exports.Lisp || (exports.Lisp = {}));
-    function traversal(prog, flat, idx) {
+    const traversal = (prog, flat, idx) => {
         flat(prog, idx[0]);
         idx[0]++;
-        if (!prog.args) {
+        if (prog.args === undefined) {
             return;
         }
         for (const func of prog.args) {
             traversal(func, flat, idx);
         }
-    }
-    function flattenPairToIdx(prog) {
+    };
+    exports.flattenPairToIdx = (prog) => {
         const flat = new Map();
         traversal(prog, (a, b) => flat.set(a, b), [0]);
         return flat;
-    }
-    exports.flattenPairToIdx = flattenPairToIdx;
-    function flattenIdxToPair(prog) {
+    };
+    exports.flattenIdxToPair = (prog) => {
         const flat = new Map();
         traversal(prog, (a, b) => flat.set(b, a), [0]);
         return flat;
-    }
-    exports.flattenIdxToPair = flattenIdxToPair;
-    function toString(prog) {
+    };
+    exports.toString = (prog) => {
         return JSON.stringify(prog, ["args", "name"]);
-    }
-    exports.toString = toString;
+    };
 });
 define("display", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -302,7 +296,7 @@ define("display", ["require", "exports"], function (require, exports) {
             this.row.appendChild(this.value);
             this.table.appendChild(this.row);
             this.value.classList.add("value-cell");
-            this.table.addEventListener("click", function (e) {
+            this.table.addEventListener("click", (e) => {
                 editor.active = func;
                 editor.selection = undefined;
                 e.stopPropagation();
@@ -314,10 +308,12 @@ define("display", ["require", "exports"], function (require, exports) {
                     this.table.style.backgroundColor = "#aaf";
                 }
                 else {
-                    this.head.innerHTML = func.name.slice(0, editor.selection) + "<span id='cursor'></span>" + func.name.slice(editor.selection);
+                    this.head.innerHTML = func.name.slice(0, editor.selection) +
+                        "<span id='cursor'></span>" +
+                        func.name.slice(editor.selection);
                 }
             }
-            if (func.args) {
+            if (func.args !== undefined) {
                 let horizontal = true;
                 let containsActive = false;
                 for (const f of func.args) {
@@ -328,7 +324,7 @@ define("display", ["require", "exports"], function (require, exports) {
                         containsActive = true;
                     }
                 }
-                horizontal = (func.horizontal || horizontal) && !containsActive;
+                horizontal = (func.horizontal === true || horizontal) && !containsActive;
                 this.toFunction();
                 for (const f of func.args) {
                     this.add(new PairView(f, editor), horizontal);
@@ -349,7 +345,7 @@ define("display", ["require", "exports"], function (require, exports) {
                 cell.appendChild(child.table);
                 toAdd = cell;
             }
-            if (!this.args) {
+            if (this.args === undefined) {
                 throw new Error("invariant violated");
             }
             this.args.appendChild(toAdd);
@@ -364,20 +360,20 @@ define("editor", ["require", "exports", "display", "language"], function (requir
         return { name: "" };
     }
     function hasArgs(pair) {
-        return !!pair.args;
+        return pair.args !== undefined;
     }
     function addParentConnections(parent) {
         if (hasArgs(parent)) {
             for (const element of parent.args) {
                 element.parent = parent;
-                if (element.args) {
+                if (element.args !== undefined) {
                     addParentConnections(element);
                 }
             }
         }
     }
     function uglyCodeToInvokeWorkers(editor) {
-        let prevWorker = undefined;
+        let prevWorker;
         const cachedResults = new Map();
         function isDeadResult(x) {
             return typeof (x) === "object" && x !== null && !!(x.message);
@@ -386,12 +382,12 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             const flat = language_1.flattenIdxToPair(editor.root);
             for (let [idx, value] of cachedResults) {
                 const pair = flat.get(idx);
-                if (!pair) {
+                if (pair === undefined) {
                     console.log("wierd behavior 737162");
                     continue;
                 }
                 const view = editor.map.get(pair);
-                if (!view) {
+                if (view === undefined) {
                     console.log("wierd behavior 37482");
                     continue;
                 }
@@ -406,15 +402,15 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             redrawValues();
         };
         editor.onedit = () => {
-            if (prevWorker) {
+            if (prevWorker !== undefined) {
                 prevWorker.terminate();
             }
             document.getElementById("code").innerHTML = "processing";
-            const testWorker = new Worker('worker-starter.js?4');
+            const testWorker = new Worker("worker-starter.js?4");
             prevWorker = testWorker;
             cachedResults.clear();
-            testWorker.addEventListener("message", function (msg) {
-                let [idx, value] = JSON.parse(msg.data);
+            testWorker.addEventListener("message", (msg) => {
+                const [idx, value] = JSON.parse(msg.data);
                 cachedResults.set(idx, value);
                 redrawValues();
             });
@@ -428,7 +424,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
         constructor(program) {
             this.map = new Map();
             this.container = document.createElement("div");
-            this.root = { "name": "" };
+            this.root = { name: "" };
             this.active = this.root;
             this.selection = undefined;
             this.container.tabIndex = 0;
@@ -460,13 +456,14 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             const startNode = new display_1.PairView(this.root, this);
             this.container.innerHTML = "";
             this.container.appendChild(startNode.table);
-            if (this.ondraw) {
+            if (this.ondraw !== undefined) {
                 this.ondraw();
             }
         }
         constrainSelection() {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
+            }
             if (this.selection !== undefined) {
                 if (this.selection > this.active.name.length) {
                     this.selection = this.active.name.length;
@@ -474,9 +471,10 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
         }
         onkeydown(e) {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            if (e.keyCode == 37) {
+            }
+            if (e.keyCode === 37) {
                 this.constrainSelection();
                 if (this.selection !== undefined) {
                     if (this.selection === 0) {
@@ -492,15 +490,15 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 }
                 e.preventDefault();
             }
-            if (e.keyCode == 38) {
+            if (e.keyCode === 38) {
                 this.up();
                 e.preventDefault();
             }
             if (e.key === "b" && e.ctrlKey && e.altKey) {
-                this.active.horizontal = !this.active.horizontal;
+                this.active.horizontal = this.active.horizontal !== true;
                 e.preventDefault();
             }
-            if (e.keyCode == 39) {
+            if (e.keyCode === 39) {
                 this.constrainSelection();
                 if (this.selection !== undefined) {
                     this.selection += 1;
@@ -514,7 +512,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 }
                 e.preventDefault();
             }
-            if (e.keyCode == 40) {
+            if (e.keyCode === 40) {
                 this.down();
                 e.preventDefault();
             }
@@ -522,30 +520,51 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 // delete
                 e.preventDefault();
                 this.constrainSelection();
-                if (this.active.name === "") {
-                    const parent = this.active.parent;
-                    if (parent) {
-                        var idx = (parent.args).indexOf(this.active);
-                        parent.args.splice(idx, 1);
-                        if (parent.args.length === 0) {
-                            this.active = parent;
-                            parent.args = undefined;
-                        }
-                        else {
-                            this.active = parent.args[Math.max(0, idx - 1)];
-                        }
-                    }
-                    this.selection = undefined;
-                }
-                else {
-                    if (this.selection !== undefined) {
-                        if (this.selection) {
-                            this.active.name = this.active.name.substring(0, this.selection - 1) + this.active.name.substring(this.selection);
-                            this.selection -= 1;
-                        }
+                if (this.selection !== undefined) {
+                    if (this.selection !== 0) {
+                        this.active.name = this.active.name.substring(0, this.selection - 1) +
+                            this.active.name.substring(this.selection);
+                        this.selection -= 1;
                     }
                     else {
+                        const parent = this.active.parent;
+                        if (parent !== undefined) {
+                            const index = parent.args.indexOf(this.active);
+                            if (index > 0) {
+                                const newActive = parent.args[index - 1];
+                                if (newActive.args !== undefined) {
+                                    this.selection = undefined;
+                                    this.active = newActive.args[0];
+                                }
+                                else {
+                                    const oldActive = this.active;
+                                    newActive.args = oldActive.args;
+                                    this.selection = newActive.name.length;
+                                    newActive.name += oldActive.name;
+                                    this.active = newActive;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (this.active.name !== "") {
                         this.active.name = "";
+                    }
+                    else {
+                        const parent = this.active.parent;
+                        if (parent !== undefined) {
+                            const idx = (parent.args).indexOf(this.active);
+                            parent.args.splice(idx, 1);
+                            if (parent.args.length === 0) {
+                                this.active = parent;
+                                parent.args = undefined;
+                            }
+                            else {
+                                this.active = parent.args[Math.max(0, idx - 1)];
+                            }
+                        }
+                        this.selection = undefined;
                     }
                 }
                 if (this.onedit !== undefined) {
@@ -555,56 +574,69 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             this.draw();
         }
         up() {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            var p = this.active.parent;
-            if (p) {
-                var idx = p.args.indexOf(this.active);
+            }
+            const p = this.active.parent;
+            if (p !== undefined) {
+                const idx = p.args.indexOf(this.active);
                 this.active = p.args[Math.max(idx - 1, 0)];
             }
         }
         down() {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            var p = this.active.parent;
-            if (p) {
-                var idx = p.args.indexOf(this.active);
+            }
+            const p = this.active.parent;
+            if (p !== undefined) {
+                const idx = p.args.indexOf(this.active);
                 this.active = p.args[Math.min(idx + 1, p.args.length - 1)];
             }
         }
         left() {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            if (this.active.parent) {
+            }
+            if (this.active.parent !== undefined) {
                 this.active = this.active.parent;
             }
         }
         right() {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            if (this.active.args && this.active.args[0]) {
+            }
+            if (this.active.args !== undefined && this.active.args[0] !== undefined) {
                 this.active = this.active.args[0];
             }
         }
-        addCellBelow() {
-            if (!this.active)
+        addCellNear(element, offset) {
+            const parent = element.parent;
+            if (parent !== undefined) {
+                const index = parent.args.indexOf(element);
+                const newElement = makePair();
+                newElement.parent = parent;
+                parent.args.splice(index + offset, 0, newElement);
+                return newElement;
+            }
+        }
+        addCellByCursor() {
+            if (this.active === undefined) {
                 return;
-            const parent = this.active.parent;
-            if (parent) {
-                var index = parent.args.indexOf(this.active);
-                var newElement = makePair();
-                newElement.parent = this.active.parent;
-                parent.args.splice(index + 1, 0, newElement);
-                this.active = newElement;
-                this.selection = undefined;
+            }
+            const newElement = this.addCellNear(this.active, 0);
+            if (newElement !== undefined) {
+                newElement.name = this.active.name.slice(0, this.selection);
+                this.active.name = this.active.name.slice(this.selection);
+                this.selection = 0;
             }
         }
         onkeypress(e) {
-            if (!this.active)
+            if (this.active === undefined) {
                 return;
-            if (e.keyCode == 40) {
+            }
+            if (e.keyCode === 40) {
                 // open paren
-                let newElement = undefined;
+                let newElement;
                 if (this.selection !== undefined) {
                     newElement = {
                         name: this.active.name.substring(this.selection),
@@ -614,7 +646,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                     this.selection = 0;
                 }
                 else {
-                    if (this.active.args) {
+                    if (this.active.args !== undefined) {
                         this.active = this.active.args[0];
                     }
                     else {
@@ -630,19 +662,23 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 }
                 this.selection = undefined;
             }
-            else if (e.keyCode == 44) {
-                // ,
-                this.addCellBelow();
+            else if (e.keyCode === 41) {
+                this.active = this.addCellNear(this.active, 1);
+                this.selection = 0;
             }
-            else if (e.keyCode == 13) {
+            else if (e.keyCode === 44) {
+                // ,
+                this.addCellByCursor();
+            }
+            else if (e.keyCode === 13) {
                 if (this.selection === undefined) {
                     this.selection = this.active.name.length;
                 }
                 else {
-                    this.addCellBelow();
+                    this.addCellByCursor();
                 }
             }
-            else if (e.keyCode == 8) {
+            else if (e.keyCode === 8) {
                 // delete
                 return;
             }
@@ -676,7 +712,7 @@ define("editor", ["require", "exports", "display", "language"], function (requir
 define("main", ["require", "exports", "editor"], function (require, exports, editor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const program = { "name": "letrec", "args": [{ "name": "inc", "args": [{ "name": "lambda", "args": [{ "name": "", "args": [{ "name": "x" }] }, { "name": "+", "args": [{ "name": "x" }, { "name": "1" }] }] }] }, { "name": "sum", "args": [{ "name": "lambda", "args": [{ "name": "", "args": [{ "name": "low" }, { "name": "high" }, { "name": "func" }, { "name": "accum" }] }, { "name": "if", "args": [{ "name": ">", "args": [{ "name": "low" }, { "name": "high" }] }, { "name": "accum" }, { "name": "sum", "args": [{ "name": "inc", "args": [{ "name": "low" }] }, { "name": "high" }, { "name": "func" }, { "name": "+", "args": [{ "name": "accum" }, { "name": "func", "args": [{ "name": "low" }] }] }] }] }] }] }, { "name": "sum", "args": [{ "name": "1" }, { "name": "3" }, { "name": "lambda", "args": [{ "name": "", "args": [{ "name": "x" }] }, { "name": "*", "args": [{ "name": "x" }, { "name": "x" }] }] }, { "name": "0" }] }] };
+    const program = { name: "letrec", args: [{ name: "inc", args: [{ name: "lambda", args: [{ name: "", args: [{ name: "x" }] }, { name: "+", args: [{ name: "x" }, { name: "1" }] }] }] }, { name: "sum", args: [{ name: "lambda", args: [{ name: "", args: [{ name: "low" }, { name: "high" }, { name: "func" }, { name: "accum" }] }, { name: "if", args: [{ name: ">", args: [{ name: "low" }, { name: "high" }] }, { name: "accum" }, { name: "sum", args: [{ name: "inc", args: [{ name: "low" }] }, { name: "high" }, { name: "func" }, { name: "+", args: [{ name: "accum" }, { name: "func", args: [{ name: "low" }] }] }] }] }] }] }, { name: "sum", args: [{ name: "1" }, { name: "3" }, { name: "lambda", args: [{ name: "", args: [{ name: "x" }] }, { name: "*", args: [{ name: "x" }, { name: "x" }] }] }, { name: "0" }] }] };
     const editor1 = new editor_1.EditorView({ name: "+", args: [{ name: "1" }, { name: "5" }, { name: "2" }] });
     const editor2 = new editor_1.EditorView({
         name: "letrec",
@@ -687,22 +723,24 @@ define("main", ["require", "exports", "editor"], function (require, exports, edi
                     {
                         name: "lambda", args: [
                             { name: "", args: [{ name: "x" }] },
-                            { name: "+", args: [{ name: "x" }, { name: "C" }] }
-                        ]
+                            { name: "+", args: [{ name: "x" }, { name: "C" }] },
+                        ],
                     }
-                ]
+                ],
             },
-            { name: "f", args: [{ name: "7" }] }
-        ]
+            { name: "f", args: [{ name: "7" }] },
+        ],
     });
     const editor3 = new editor_1.EditorView(program);
-    const editor4 = new editor_1.EditorView({ 'name': 'index', args: [
-            { name: 'list', args: [{ name: '1' }, { name: '2' }, { name: '5' }] },
-            { name: '2' },
-        ] });
+    const editor4 = new editor_1.EditorView({
+        name: "index", args: [
+            { name: "list", args: [{ name: "1" }, { name: "2" }, { name: "5" }] },
+            { name: "2" },
+        ],
+    });
     const editor5 = new editor_1.EditorView({
-        'name': 'concat',
-        args: [{ name: "'hello" }, { name: "' world" }]
+        name: "concat",
+        args: [{ name: "'hello" }, { name: "' world" }],
     });
     editor1.draw();
     editor2.draw();

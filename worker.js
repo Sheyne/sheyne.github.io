@@ -1,8 +1,8 @@
-define("language", ["require", "exports"], function (require, exports) {
+define("language", ["require", "exports"], function(require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Lisp;
-    (function (Lisp) {
+    (function(Lisp) {
         ;
         ;
         class DeadResult {
@@ -80,31 +80,31 @@ define("language", ["require", "exports"], function (require, exports) {
             return v;
         }
         const lessthan = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath(function(a, b) {
                 return a < b;
             }, args, context, info, "<");
         };
         lessthan.numArgs = 2;
         const greaterthan = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath(function(a, b) {
                 return a > b;
             }, args, context, info, ">");
         };
         greaterthan.numArgs = 2;
         const equalto = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath(function(a, b) {
                 return a === b;
             }, args, context, info, "=");
         };
         equalto.numArgs = 2;
         const minus = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath(function(a, b) {
                 return a - b;
             }, args, context, info, "-");
         };
         minus.numArgs = 2;
         const divide = (args, context, info) => {
-            return binaryMath(function (a, b) {
+            return binaryMath(function(a, b) {
                 return a / b;
             }, args, context, info, "/");
         };
@@ -172,7 +172,7 @@ define("language", ["require", "exports"], function (require, exports) {
             for (const name of arg1.args) {
                 argNames.push(name.name);
             }
-            const lambdaFunc = function (args, context, info) {
+            const lambdaFunc = function(args, context, info) {
                 const newContext = { parentContext: context, members: {} };
                 for (let i = 0; i < argNames.length; i++) {
                     newContext.members[argNames[i]] = evallisp(args[i], context, info);
@@ -288,7 +288,7 @@ define("language", ["require", "exports"], function (require, exports) {
     }
     exports.toString = toString;
 });
-define("worker", ["require", "exports", "language"], function (require, exports, language_1) {
+define("worker", ["require", "exports", "language"], function(require, exports, language_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     addEventListener("message", (evt) => {
