@@ -291,6 +291,10 @@ define("language", ["require", "exports"], function (require, exports) {
     exports.toString = (prog) => {
         return JSON.stringify(prog, ["args", "name"]);
     };
+    exports.fromString = (prog) => {
+        return JSON.parse(prog);
+        // TODO: any kind of validation that prog is well-formed
+    };
 });
 define("worker", ["require", "exports", "language"], function (require, exports, language_1) {
     "use strict";

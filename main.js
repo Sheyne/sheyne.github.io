@@ -291,6 +291,10 @@ define("language", ["require", "exports"], function (require, exports) {
     exports.toString = (prog) => {
         return JSON.stringify(prog, ["args", "name"]);
     };
+    exports.fromString = (prog) => {
+        return JSON.parse(prog);
+        // TODO: any kind of validation that prog is well-formed
+    };
 });
 define("display", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -444,6 +448,15 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             this.container.addEventListener("keypress", (e) => {
                 this.onkeypress(e);
             });
+            this.container.addEventListener("copy", (e) => {
+                this.oncopy(e);
+            });
+            this.container.addEventListener("cut", (e) => {
+                this.oncut(e);
+            });
+            this.container.addEventListener("paste", (e) => {
+                this.onpaste(e);
+            });
             this.container.addEventListener("focus", (e) => {
                 if (this.active === undefined) {
                     this.active = this.root;
@@ -480,8 +493,58 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                 }
             }
         }
+        onpaste(e) {
+            const pair = language_1.fromString(e.clipboardData.getData('text/plain'));
+            if (this.active !== undefined) {
+                if (this.selection === undefined) {
+                    this.active.name = pair.name;
+                    this.active.args = pair.args;
+                }
+                else {
+                    const name = this.active.name;
+                    this.active.name = name.slice(0, this.selection) + pair.name + name.slice(this.selection);
+                    this.selection += pair.name.length;
+                    this.active.args = pair.args;
+                }
+                addParentConnections(this.active);
+                if (this.onedit !== undefined) {
+                    this.onedit();
+                }
+                this.draw();
+            }
+            e.preventDefault();
+        }
+        oncopy(e) {
+            if (this.active !== undefined) {
+                e.clipboardData.setData('text/plain', language_1.toString(this.active));
+            }
+            e.preventDefault();
+        }
+        oncut(e) {
+            if (this.active !== undefined) {
+                e.clipboardData.setData('text/plain', language_1.toString(this.active));
+                if (this.active.parent !== undefined) {
+                    this.active.parent.args.splice(this.active.parent.args.indexOf(this.active), 1);
+                    if (this.active.parent.args.length === 0) {
+                        this.active.parent.args = undefined;
+                    }
+                }
+                if (this.onedit !== undefined) {
+                    this.onedit();
+                }
+                this.draw();
+            }
+            e.preventDefault();
+        }
         onkeydown(e) {
             if (this.active === undefined) {
+                return;
+            }
+            if (e.key === "b" && e.ctrlKey && e.altKey) {
+                this.active.horizontal = this.active.horizontal !== true;
+                e.preventDefault();
+            }
+            if (e.metaKey || e.metaKey || e.altKey || e.ctrlKey) {
                 return;
             }
             if (e.keyCode === 37) {
@@ -502,10 +565,6 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
             if (e.keyCode === 38) {
                 this.up();
-                e.preventDefault();
-            }
-            if (e.key === "b" && e.ctrlKey && e.altKey) {
-                this.active.horizontal = this.active.horizontal !== true;
                 e.preventDefault();
             }
             if (e.keyCode === 39) {
@@ -554,6 +613,9 @@ define("editor", ["require", "exports", "display", "language"], function (requir
                                     this.active = newActive;
                                     parent.args.splice(index, 1);
                                 }
+                            }
+                            else {
+                                this.selection = undefined;
                             }
                         }
                     }
@@ -645,6 +707,9 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             if (this.active === undefined) {
                 return;
             }
+            if (e.metaKey || e.metaKey || e.altKey || e.ctrlKey) {
+                return;
+            }
             if (e.keyCode === 40) {
                 // open paren
                 let newElement;
@@ -695,9 +760,6 @@ define("editor", ["require", "exports", "display", "language"], function (requir
             }
             else if (e.keyCode === 27) {
                 this.selection = undefined;
-            }
-            else if (e.key === "b" && e.altKey) {
-                return;
             }
             else {
                 this.constrainSelection();
