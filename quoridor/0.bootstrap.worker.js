@@ -43,7 +43,7 @@ eval("\"use strict\";\n// Instantiate WebAssembly module\nvar wasmExports = __we
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var quoridor_wasm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! quoridor-wasm */ \"../pkg/quoridor_wasm.js\");\n\n\nlet ai = new quoridor_wasm__WEBPACK_IMPORTED_MODULE_0__[\"Ai\"]();\nai.set_greedy()\n\nonmessage = function(e) {\n    if (e.data.move) {\n        ai.send(e.data.move);\n        postMessage(ai.receive());\n    } else if (e.data.setMode == \"greedy\") {\n        ai.set_greedy()\n    } else if (e.data.setMode && e.data.setMode.rubot) {\n        // ai.set_rubot(e.data.setMode.rubot)\n    }\n}\n  \n\n//# sourceURL=webpack:///./ai_worker.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var quoridor_wasm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! quoridor-wasm */ \"../pkg/quoridor_wasm.js\");\n\n\nlet ai = new quoridor_wasm__WEBPACK_IMPORTED_MODULE_0__[\"Ai\"]();\n\nonmessage = function(e) {\n    if (e.data.move) {\n        ai.send(e.data.move);\n        postMessage(ai.receive());\n    } else if (e.data.setMode == \"greedy\") {\n        ai.set_greedy()\n    } else if (e.data.setMode && e.data.setMode.rubot) {\n        ai.set_rubot(e.data.setMode.rubot)\n    }\n}\n  \n\n//# sourceURL=webpack:///./ai_worker.js?");
 
 /***/ }),
 
