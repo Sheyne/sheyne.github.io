@@ -15,11 +15,15 @@
 		background: #115;
 		color: #dda;
 		padding: 30px 40px 30px 400px;
-		font-family: Tahoma, Helvetica;
+		font-family: monospace;
+	}
+
+	.lighter {
+		color: #99b;
 	}
 
 	h1 {
-		font-size: 2.2em;
+		font-size: 1em;
 	}
 /*	#resume a{
 		background-color: #0c8cf9fd6;
@@ -33,8 +37,16 @@
 		margin-top: 1em;
 	}
 	div div{
-		font-size: 0.8em;
-		margin-left: 2em;
+		font-size: 1em;
+	}
+
+	h2 {
+		font-size: 1em;
+		color: #99b;
+	}
+
+	h3 {
+		font-size: 1em;
 	}
 
 	a {
@@ -55,14 +67,14 @@
 <body>
 	<img src="outline.png" id="outline"/>
 <div>
-<div>~$ whois sheyne.com</div>
-<div>contact: Sheyne Anderson (pronounced Shane)</div>
-<div>email: sheyne@sheyne.com</div>
-<div>github: <a href="https://github.com/sheyne">github.com/sheyne</a></div>
-<div>phone: +1 (801) 866-9142</div>
-<div>summary: Highly skilled software developer bringing enormous talents for software design, development, and integration. Has a background writing code and developing systems for a wide range of environments from bare-metal to the web.</div>
+<div class="lighter">~$ whois sheyne.com</div>
+<div><span class="lighter">contact:</span> Sheyne Anderson <span class="lighter">(pronounced Shane)</span></div>
+<div><span class="lighter">email:</span> sheyne@sheyne.com</div>
+<div><span class="lighter">github:</span> <a href="https://github.com/sheyne">github.com/sheyne</a></div>
+<div><span class="lighter">phone:</span> +1 (801) 866-9142</div>
+<div><span class="lighter">summary:</span> Highly skilled software developer bringing enormous talents for software design, development, and integration. Has a background writing code and developing systems for a wide range of environments from bare-metal to the web.</div>
 <h2>work history:</h2>
-<h3>2014 – Present: Novacoast, Inc:</h3>
+<h3>2014 - Present: Novacoast, Inc:</h3>
 <ul>
 <li>Works as a consultant solving technical problems for various companies including banks, software security companies, and major manufacturers.</li>
 <li>Designed and wrote SDKs, developed iOS and Android Apps, worked with low level USB communications to handle data from 64 concurrent video devices, and wrote firmware for microcontrollers.</li>
@@ -70,12 +82,12 @@
 </ul>
 <h2>notable side projects:</h2>
 <ul>
-<li>A Lisp interpreter (with mutation) at type-checking time in Typescript and a BrainF%ck interpreter at type-checking time in Rust. I worked on these projects to ensure I have a deep understanding of type-level programming so that I can write safe, correct, and performant code.</li>
-<li>WASM based WebRTC multiplayer boardgame online with high-performance AI. The game logic and AI are written in Rust and run in a web-worker while the main UI is HTML/JS/CSS.</li>
-<li>Electron/TypeScript/Angular pluggable GraphEditor/IDE. I worked with friends to build an IDE for visual programming languages and other kinds of graph based structures, like Turing Machines.</li>
+<li>A <a href="https://github.com/Sheyne/ts-type-bf/blob/main/type-lisp.ts">Lisp interpreter</a> (with mutation) at type-checking time in Typescript and a BrainF%ck interpreter at type-checking time in Rust. I worked on these projects to ensure I have a deep understanding of type-level programming so that I can write safe, correct, and performant code.</li>
+<li><a href="https://sheyne.com/quoridor/">WASM based WebRTC multiplayer boardgame</a> online with high-performance AI. <a href="https://github.com/Sheyne/quoridor">The game logic and AI</a> are written in Rust and run in a web-worker while the main UI is HTML/JS/CSS.</li>
+<li><a href="https://github.com/2graphic">Electron/TypeScript/Angular pluggable GraphEditor/IDE.</a> I worked with friends to build an IDE for visual programming languages and other kinds of graph based structures, like Turing Machines.</li>
 </ul>
 <h2>education:</h2>
-<h3>2013 – 2017: University of Utah (GPA: 3.9):</h3>
+<h3>2013 - 2017: University of Utah (GPA: 3.9):</h3>
 <ul>
 <li>Honors Bachelor of Science: Computer Science </li>
 <li>Bachelor of Science: Mathematics</li>
@@ -96,7 +108,7 @@
 <li>Proficient in: Bash, HTML, CSS, SQL, Haskell, Objective-C, Lisp</li>
 <li>Passion for Programming Language design and am constantly playing with new languages and paradigms</li>
 </ul>
-<div>~$</div>
+<div class="lighter">~$</div>
 </div>
 </body>
 </html>
